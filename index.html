@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sullivan's Island – Citizen Input Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Source+Serif+4:opsz,wght@8..60,300;8..60,400;8..60,600&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *, *::before, *::after { box-sizing:border-box; margin:0; padding:0; }
+    body { background:#f4f1eb; font-family:'Source Serif 4',Georgia,serif; min-height:100vh; }
+
+    /* ── Header ── */
+    .header { background:#1a3a5c; color:#fff; position:relative; overflow:hidden; }
+    .header::before { content:''; position:absolute; inset:0; background-image:repeating-linear-gradient(45deg,transparent,transparent 60px,rgba(255,255,255,0.025) 60px,rgba(255,255,255,0.025) 61px); }
+    .header-inner { max-width:1180px; margin:0 auto; padding:36px 32px 28px; position:relative; z-index:2; }
+    .seal-badge { display:inline-flex; align-items:center; gap:7px; background:rgba(255,255,255,0.11); border:1px solid rgba(255,255,255,0.2); border-radius:4px; padding:5px 13px; font-size:0.7rem; letter-spacing:1.8px; text-transform:uppercase; margin-bottom:14px; }
+    .header h1 { font-family:'Playfair Display',serif; font-size:clamp(1.6rem,4vw,2.5rem); font-weight:900; line-height:1.1; letter-spacing:-0.5px; }
+    .header .sub { font-size:0.9rem; opacity:0.72; margin-top:7px; font-weight:300; max-width:660px; line-height:1.6; }
+    .header-row { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+    .mod-btn { background:rgba(255,255,255,0.1); border:1px solid rgba(255,255,255,0.2); color:rgba(255,255,255,0.75); padding:7px 14px; border-radius:4px; cursor:pointer; font-size:0.78rem; font-family:inherit; transition:all .2s; white-space:nowrap; margin-top:4px; }
+    .mod-btn:hover { background:rgba(255,255,255,0.2); color:#fff; }
+    .mod-btn.active { background:#e6c84a; border-color:#e6c84a; color:#1a1a1a; font-weight:700; }
+
+    /* ── Breadcrumb ── */
+    .breadcrumb { display:flex; align-items:center; gap:8px; margin-bottom:14px; flex-wrap:wrap; }
+    .bc-btn { background:rgba(255,255,255,0.13); border:1px solid rgba(255,255,255,0.22); color:rgba(255,255,255,0.85); padding:5px 12px; border-radius:4px; cursor:pointer; font-size:0.79rem; font-family:inherit; transition:background .2s; white-space:nowrap; }
+    .bc-btn:hover { background:rgba(255,255,255,0.23); color:#fff; }
+    .bc-sep { color:rgba(255,255,255,0.3); }
+
+    /* ── Nav tabs ── */
+    .nav-tabs { display:flex; gap:0; margin-top:20px; border-bottom:2px solid rgba(255,255,255,0.15); }
+    .nav-tab { padding:9px 22px; font-family:'Source Serif 4',serif; font-size:0.88rem; font-weight:600; color:rgba(255,255,255,0.6); border:none; background:none; cursor:pointer; border-bottom:3px solid transparent; margin-bottom:-2px; transition:all .2s; letter-spacing:0.3px; }
+    .nav-tab:hover { color:rgba(255,255,255,0.9); }
+    .nav-tab.active { color:#fff; border-bottom-color:#e6c84a; }
+
+    /* ── Main ── */
+    .main { max-width:1180px; margin:0 auto; padding:36px 32px 60px; }
+    @media(max-width:700px){ .main{padding:20px 16px 40px;} .header-inner{padding:24px 16px 20px;} }
+
+    /* ── Config banner ── */
+    .config-banner { background:#fff3cd; border:1px solid #ffd966; border-radius:5px; padding:13px 17px; margin-bottom:24px; font-size:0.85rem; color:#6d4c00; line-height:1.7; }
+    .config-banner code { background:rgba(0,0,0,0.07); padding:1px 5px; border-radius:3px; font-size:0.79rem; }
+
+    /* ── Reorder hint banner ── */
+    .reorder-hint { background:#fffbea; border:1px solid #e6c84a; border-radius:5px; padding:11px 16px; margin-bottom:18px; font-size:0.83rem; color:#7a6200; display:flex; align-items:center; gap:10px; }
+    .reorder-hint .rh-icon { font-size:1.1rem; flex-shrink:0; }
+    .save-order-btn { margin-left:auto; background:#e6c84a; border:none; border-radius:3px; padding:6px 14px; font-family:inherit; font-size:0.8rem; font-weight:700; color:#111; cursor:pointer; transition:filter .15s; white-space:nowrap; }
+    .save-order-btn:hover { filter:brightness(1.1); }
+    .save-order-btn.saved { background:#d4edda; color:#155724; }
+
+    /* ── Committee grid ── */
+    .committee-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(285px,1fr)); gap:18px; }
+
+    /* ── Committee card ── */
+    .c-card { background:#fff; border:1px solid #ddd; border-radius:5px; padding:24px 24px 18px; cursor:pointer; transition:transform .2s,box-shadow .2s,opacity .15s; position:relative; overflow:hidden; user-select:none; }
+    .c-card:hover:not(.dragging):not(.drag-mode) { transform:translateY(-3px); box-shadow:0 10px 30px rgba(0,0,0,0.09); }
+    .c-card.drag-mode { cursor:grab; }
+    .c-card.drag-mode:hover { transform:none; box-shadow:0 4px 16px rgba(0,0,0,0.12); border-color:#bbb; }
+    .c-card.dragging { opacity:0.4; cursor:grabbing; box-shadow:none; transform:scale(0.98); }
+    .c-card.drag-over { border:2px dashed #1a3a5c; background:#f0f4f9; transform:scale(1.02); }
+    .c-card .accent { position:absolute; top:0; left:0; width:5px; height:100%; }
+    .c-card .cicon { font-size:1.9rem; display:block; margin-bottom:10px; }
+    .c-card h3 { font-family:'Playfair Display',serif; font-size:1.05rem; font-weight:700; color:#111; margin-bottom:5px; }
+    .c-card .cdesc { font-size:0.82rem; color:#555; line-height:1.65; }
+    .c-card-footer { display:flex; justify-content:space-between; align-items:center; margin-top:14px; padding-top:11px; border-top:1px solid #f0ece4; font-size:0.77rem; color:#888; }
+    .progress-bar { height:5px; background:#eee; border-radius:3px; overflow:hidden; display:flex; margin-top:5px; }
+    .progress-seg { height:100%; transition:width .5s; }
+
+    /* ── Drag handle (mod mode) ── */
+    .drag-handle { position:absolute; top:10px; right:10px; display:flex; flex-direction:column; gap:3px; padding:4px; cursor:grab; opacity:0.4; transition:opacity .15s; }
+    .drag-handle:hover { opacity:1; }
+    .drag-handle span { display:block; width:18px; height:2px; background:#888; border-radius:2px; }
+    .drag-order-num { position:absolute; bottom:10px; right:10px; font-size:0.68rem; color:#ccc; font-weight:600; }
+
+    /* ── All Issues view ── */
+    .issues-toolbar { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:22px; }
+    .issues-toolbar h2 { font-family:'Playfair Display',serif; font-size:1.4rem; margin-right:auto; }
+    .issue-row { background:#fff; border:1px solid #ddd; border-radius:5px; padding:16px 20px; margin-bottom:10px; cursor:pointer; transition:transform .15s,box-shadow .15s; display:flex; align-items:center; gap:16px; }
+    .issue-row:hover { transform:translateX(3px); box-shadow:0 4px 16px rgba(0,0,0,0.07); }
+    .issue-row .ir-icon { font-size:1.4rem; flex-shrink:0; }
+    .issue-row .ir-body { flex:1; min-width:0; }
+    .issue-row .ir-title { font-family:'Playfair Display',serif; font-size:1rem; font-weight:700; color:#111; margin-bottom:3px; }
+    .issue-row .ir-meta { font-size:0.77rem; color:#888; }
+    .issue-row .ir-right { display:flex; flex-direction:column; align-items:flex-end; gap:5px; flex-shrink:0; }
+    .ir-badge { font-size:0.68rem; font-weight:600; letter-spacing:0.8px; text-transform:uppercase; padding:2px 8px; border-radius:3px; white-space:nowrap; }
+    .ir-badge.official { background:#e8f0fe; color:#1a56db; }
+    .ir-badge.community { background:#f0ece4; color:#777; }
+    .mini-pills { display:flex; gap:4px; }
+    .mini-pill { font-size:0.68rem; padding:2px 7px; border-radius:10px; font-weight:600; border:1px solid; }
+
+    /* ── Topics grid ── */
+    .page-intro { margin-bottom:20px; }
+    .page-intro h2 { font-family:'Playfair Display',serif; font-size:1.45rem; font-weight:700; margin-bottom:5px; }
+    .page-intro p { font-size:0.85rem; color:#666; line-height:1.7; }
+    .topics-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(300px,1fr)); gap:16px; margin-bottom:28px; }
+    .topic-card { background:#fff; border:1px solid #ddd; border-radius:5px; padding:20px 20px 16px; cursor:pointer; transition:transform .18s,box-shadow .18s; position:relative; }
+    .topic-card:hover { transform:translateY(-3px); box-shadow:0 8px 24px rgba(0,0,0,0.08); }
+    .topic-card.official { border-top:3px solid; }
+    .topic-badge { display:inline-flex; align-items:center; gap:5px; font-size:0.68rem; letter-spacing:1px; text-transform:uppercase; font-weight:600; margin-bottom:9px; padding:3px 8px; border-radius:3px; }
+    .topic-badge.official-badge { background:#e8f0fe; color:#1a56db; }
+    .topic-badge.public-badge { background:#f0ece4; color:#777; }
+    .topic-card h3 { font-family:'Playfair Display',serif; font-size:1rem; font-weight:700; color:#111; margin-bottom:5px; line-height:1.35; }
+    .topic-card .tdesc { font-size:0.81rem; color:#666; line-height:1.6; margin-bottom:11px; }
+    .topic-card-footer { display:flex; justify-content:space-between; align-items:center; font-size:0.77rem; color:#999; border-top:1px solid #f0ece4; padding-top:9px; }
+    .stance-pills { display:flex; gap:5px; }
+    .s-pill { font-size:0.7rem; padding:2px 7px; border-radius:10px; font-weight:600; border:1px solid; }
+    .del-btn { position:absolute; top:9px; right:9px; background:none; border:none; color:#ddd; cursor:pointer; font-size:0.95rem; transition:color .15s; line-height:1; padding:2px; }
+    .del-btn:hover { color:#dc3545; }
+
+    /* ── Moderator panel ── */
+    .mod-panel { background:#fff; border:2px dashed #e6c84a; border-radius:6px; padding:22px; margin-bottom:26px; }
+    .mod-panel h3 { font-family:'Playfair Display',serif; font-size:1.05rem; font-weight:700; margin-bottom:3px; }
+    .mod-panel .mod-sub { font-size:0.79rem; color:#888; margin-bottom:16px; }
+
+    /* ── Overlays & Modals ── */
+    .overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; display:flex; align-items:center; justify-content:center; padding:16px; }
+    .modal { background:#fff; border-radius:6px; padding:32px; max-width:520px; width:100%; max-height:90vh; overflow-y:auto; box-shadow:0 20px 60px rgba(0,0,0,0.2); }
+    .modal h2 { font-family:'Playfair Display',serif; font-size:1.4rem; font-weight:900; margin-bottom:5px; }
+    .modal .modal-sub { font-size:0.83rem; color:#888; margin-bottom:22px; padding-bottom:16px; border-bottom:1px solid #f0ece4; line-height:1.6; }
+    .modal-close { position:absolute; top:12px; right:14px; background:none; border:none; font-size:1.3rem; color:#bbb; cursor:pointer; transition:color .15s; }
+    .modal-close:hover { color:#444; }
+    .modal-relative { position:relative; }
+
+    /* ── Form elements ── */
+    .field-wrap { margin-bottom:14px; }
+    .field-label { display:block; font-size:0.72rem; font-weight:600; text-transform:uppercase; letter-spacing:0.9px; color:#444; margin-bottom:5px; }
+    .req { color:#c0392b; }
+    .f-input { width:100%; padding:10px 12px; border:1px solid #ccc; border-radius:3px; font-family:inherit; font-size:0.9rem; color:#222; background:#fafaf8; transition:border-color .18s; }
+    .f-input:focus { outline:none; border-color:#1a3a5c; background:#fff; }
+    textarea.f-input { resize:vertical; min-height:80px; }
+    select.f-input { cursor:pointer; }
+    .inline-form { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .full-span { grid-column:1/-1; }
+    @media(max-width:540px){ .inline-form{grid-template-columns:1fr;} }
+
+    /* ── Stance selector ── */
+    .stance-row { display:flex; gap:8px; margin-bottom:14px; }
+    .stance-btn { flex:1; padding:10px 5px; border:2px solid #ddd; border-radius:4px; background:#fafaf8; cursor:pointer; font-family:inherit; font-size:0.76rem; text-align:center; transition:all .15s; line-height:1.4; }
+    .stance-btn:hover { border-color:#bbb; }
+    .stance-btn.active { font-weight:700; border-width:2px; }
+
+    /* ── Buttons ── */
+    .btn { padding:10px 22px; border:none; border-radius:3px; font-family:inherit; font-size:0.88rem; font-weight:600; cursor:pointer; transition:filter .18s; white-space:nowrap; }
+    .btn:hover:not(:disabled) { filter:brightness(1.1); }
+    .btn:disabled { opacity:0.5; cursor:not-allowed; }
+    .btn-primary { background:#1a3a5c; color:#fff; }
+    .btn-gold { background:#e6c84a; color:#111; }
+    .btn-ghost { background:#eee; color:#444; }
+    .btn-outline { background:#fff; color:#1a3a5c; border:2px solid #1a3a5c; }
+    .btn-outline:hover:not(:disabled) { background:#1a3a5c; color:#fff; filter:none; }
+    .btn-sm { font-size:0.82rem; padding:7px 14px; }
+    .btn-row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+
+    /* ── CTA bar ── */
+    .cta-bar { background:#fff; border:1px solid #ddd; border-radius:5px; padding:20px 24px; margin-bottom:28px; display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; }
+    .cta-bar .cta-text h3 { font-family:'Playfair Display',serif; font-size:1.1rem; font-weight:700; margin-bottom:3px; }
+    .cta-bar .cta-text p { font-size:0.83rem; color:#666; line-height:1.55; }
+    .cta-bar-btn { background:#1a3a5c; color:#fff; border:none; border-radius:4px; padding:11px 22px; font-family:'Playfair Display',serif; font-size:0.95rem; font-weight:700; cursor:pointer; transition:background .2s; white-space:nowrap; }
+    .cta-bar-btn:hover { background:#0f2540; }
+
+    /* ── Alerts ── */
+    .alert { padding:10px 14px; border-radius:3px; font-size:0.83rem; margin-bottom:14px; border:1px solid; line-height:1.5; }
+    .alert-success { background:#d4edda; border-color:#c3e6cb; color:#155724; }
+    .alert-error { background:#f8d7da; border-color:#f5c6cb; color:#721c24; }
+
+    /* ── Two-col layout ── */
+    .two-col { display:grid; grid-template-columns:350px 1fr; gap:30px; align-items:start; }
+    @media(max-width:860px){ .two-col{grid-template-columns:1fr;} }
+    .form-card { background:#fff; border:1px solid #ddd; border-radius:5px; padding:24px; position:sticky; top:20px; }
+    .form-card h2 { font-family:'Playfair Display',serif; font-size:1.15rem; font-weight:700; margin-bottom:4px; }
+    .form-card .form-sub { font-size:0.78rem; color:#888; margin-bottom:16px; border-bottom:1px solid #f0ece4; padding-bottom:12px; line-height:1.5; }
+    .submit-btn { width:100%; padding:12px; color:#fff; border:none; border-radius:3px; font-family:'Playfair Display',serif; font-size:0.98rem; font-weight:700; cursor:pointer; transition:filter .2s; }
+    .submit-btn:hover:not(:disabled) { filter:brightness(1.12); }
+    .submit-btn:disabled { opacity:0.5; cursor:not-allowed; }
+
+    /* ── Stats + comments ── */
+    .stats-row { display:flex; gap:9px; flex-wrap:wrap; margin-bottom:18px; }
+    .stat-chip { padding:5px 13px; border-radius:20px; font-size:0.76rem; font-weight:600; border:1px solid; cursor:pointer; transition:opacity .15s; }
+    .stat-chip.dim { opacity:0.4; }
+    .c-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; flex-wrap:wrap; gap:10px; }
+    .c-header h2 { font-family:'Playfair Display',serif; font-size:1.35rem; }
+    .controls { display:flex; gap:8px; flex-wrap:wrap; }
+    .ctrl-sel { padding:7px 9px; border:1px solid #ccc; border-radius:3px; font-family:inherit; font-size:0.79rem; background:#fff; cursor:pointer; }
+    .comment-card { background:#fff; border:1px solid #e0ddd6; border-left-width:5px; border-radius:5px; padding:17px; margin-bottom:10px; position:relative; }
+    .stance-tag { display:inline-flex; align-items:center; gap:5px; padding:3px 10px; border-radius:20px; font-size:0.72rem; font-weight:600; margin-bottom:7px; border:1px solid; }
+    .comment-msg { font-size:0.88rem; line-height:1.75; color:#333; }
+    .comment-meta { display:flex; justify-content:space-between; align-items:center; margin-top:10px; padding-top:8px; border-top:1px solid #f0ece4; font-size:0.76rem; color:#999; }
+
+    /* ── Empty / loading ── */
+    .empty-state { text-align:center; padding:52px 20px; }
+    .empty-state .e-icon { font-size:2.8rem; display:block; margin-bottom:10px; }
+    .empty-state p { font-size:0.9rem; color:#999; }
+    .loading { text-align:center; padding:40px; color:#999; font-size:0.87rem; }
+
+    /* ── Footer ── */
+    .footer { background:#1a3a5c; color:rgba(255,255,255,0.5); text-align:center; padding:22px 20px; font-size:0.76rem; margin-top:60px; }
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+
+// ╔══════════════════════════════════════════════════════════════╗
+// ║  CONFIGURATION                                               ║
+// ╠══════════════════════════════════════════════════════════════╣
+const SUPABASE_URL       = "YOUR_SUPABASE_URL";
+const SUPABASE_ANON_KEY  = "YOUR_SUPABASE_ANON_KEY";
+const MODERATOR_PASSWORD = "Sull250!";
+// ╚══════════════════════════════════════════════════════════════╝
+
+const IS_CONFIGURED = SUPABASE_URL !== "YOUR_SUPABASE_URL";
+const supabase = IS_CONFIGURED ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
+
+// Master list — order here is the DEFAULT. Saved order overrides it.
+const ALL_COMMITTEES = [
+  { id:"town_council",        name:"Town Council",                    icon:"🏛️", color:"#1a3a5c", desc:"General town governance, ordinances, and policy decisions." },
+  { id:"design_review",       name:"Design Review Board",             icon:"📐", color:"#2d6a4f", desc:"Architectural and aesthetic standards for new construction and renovations." },
+  { id:"public_safety",       name:"Public Safety Committee",         icon:"🛡️", color:"#7b3f00", desc:"Police, fire, emergency management, and traffic safety matters." },
+  { id:"planning",            name:"Planning Commission",             icon:"🗺️", color:"#4a4e8c", desc:"Land use, zoning, and long-range community planning." },
+  { id:"parks_rec",           name:"Parks & Recreation",              icon:"🌊", color:"#0077b6", desc:"Beach access, parks, trails, and recreational facilities." },
+  { id:"finance",             name:"Finance Committee",               icon:"📊", color:"#6d4c41", desc:"Budget, taxes, municipal spending, and fiscal policy." },
+  { id:"public_facilities",   name:"Public Facilities Committee",     icon:"🏗️", color:"#5a6e3a", desc:"Town buildings, infrastructure, utilities, and public works." },
+  { id:"land_use",            name:"Land Use & Natural Resources",    icon:"🌿", color:"#3d7a5e", desc:"Conservation, natural resource management, environmental stewardship, and land use policy." },
+  { id:"water_sewer",         name:"Water & Sewer Committee",         icon:"💧", color:"#1b6ca8", desc:"Water supply, wastewater treatment, drainage, and utility infrastructure." },
+  { id:"zoning_appeals",      name:"Board of Zoning Appeals",         icon:"⚖️", color:"#6b3fa0", desc:"Variances, special exceptions, and appeals from zoning decisions." },
+  { id:"tree_commission",     name:"Tree Commission",                  icon:"🌳", color:"#2e7d32", desc:"Tree preservation, canopy management, landscaping standards, and arbor policy." },
+  { id:"ad_hoc",              name:"Ad Hoc Committees",               icon:"📌", color:"#b06a00", desc:"Special-purpose committees formed to address specific issues or projects on a temporary basis." },
+  { id:"administration",      name:"Administration Committee",        icon:"🗂️", color:"#455a64", desc:"Town administration, personnel policies, operational procedures, and intergovernmental coordination." },
+  { id:"other",               name:"Other",                           icon:"💬", color:"#78909c", desc:"Issues, questions, or comments that do not fall under a specific committee or board." },
+];
+
+const STANCES = {
+  favor:   { label:"In Favor",     emoji:"✅", bg:"#d4edda", color:"#155724", border:"#c3e6cb" },
+  neutral: { label:"Neutral",      emoji:"⚖️", bg:"#fff3cd", color:"#856404", border:"#ffeeba" },
+  against: { label:"Not in Favor", emoji:"❌", bg:"#f8d7da", color:"#721c24", border:"#f5c6cb" },
+};
+
+const ORDER_KEY = "si_committee_order_v1";
+
+function loadSavedOrder() {
+  try {
+    const saved = JSON.parse(localStorage.getItem(ORDER_KEY) || "null");
+    if (!Array.isArray(saved)) return ALL_COMMITTEES;
+    // Reconstruct, preserving any newly added committees not in saved order
+    const ordered = saved.map(id => ALL_COMMITTEES.find(c => c.id === id)).filter(Boolean);
+    const missing = ALL_COMMITTEES.filter(c => !saved.includes(c.id));
+    return [...ordered, ...missing];
+  } catch { return ALL_COMMITTEES; }
+}
+
+function saveSavedOrder(committees) {
+  try { localStorage.setItem(ORDER_KEY, JSON.stringify(committees.map(c => c.id))); } catch {}
+}
+
+function timeAgo(d) {
+  const diff = Date.now() - new Date(d).getTime(), m = Math.floor(diff/60000), h = Math.floor(m/60), dy = Math.floor(h/24);
+  if (dy > 0) return dy + "d ago"; if (h > 0) return h + "h ago"; if (m > 0) return m + "m ago"; return "just now";
+}
+
+function committeeById(id) { return ALL_COMMITTEES.find(c => c.id === id) || { name: id, icon: "📋", color: "#888" }; }
+
+/* ── Local fallback ── */
+const local = (() => {
+  let S = { topics: [], comments: [] };
+  try { const r = localStorage.getItem("si_v4"); if (r) S = JSON.parse(r); } catch {}
+  if (!S.topics) S.topics = []; if (!S.comments) S.comments = [];
+  const save = () => { try { localStorage.setItem("si_v4", JSON.stringify(S)); } catch {} };
+  return {
+    getTopics: (cid) => Promise.resolve(S.topics.filter(t => t.committee_id === cid)),
+    getAllTopics: () => Promise.resolve([...S.topics]),
+    insertTopic: (row) => { const t = {...row, id: Date.now(), created_at: new Date().toISOString()}; S.topics.push(t); save(); return Promise.resolve(t); },
+    deleteTopic: (id) => { S.topics = S.topics.filter(t => t.id !== id); S.comments = S.comments.filter(c => c.topic_id !== id); save(); return Promise.resolve(); },
+    getComments: (tid) => Promise.resolve(S.comments.filter(c => c.topic_id === tid).slice().reverse()),
+    getAllCommitteeComments: (cid) => Promise.resolve(S.comments.filter(c => c.committee_id === cid)),
+    getAllComments: () => Promise.resolve([...S.comments]),
+    insertComment: (row) => { const c = {...row, id: Date.now(), created_at: new Date().toISOString()}; S.comments.push(c); save(); return Promise.resolve(c); },
+    deleteComment: (id) => { S.comments = S.comments.filter(c => c.id !== id); save(); return Promise.resolve(); },
+  };
+})();
+
+const db = {
+  async getTopics(cid) { if (!IS_CONFIGURED) return local.getTopics(cid); const {data,error} = await supabase.from("topics").select("*").eq("committee_id",cid).order("created_at",{ascending:true}); if (error) throw error; return data; },
+  async getAllTopics() { if (!IS_CONFIGURED) return local.getAllTopics(); const {data,error} = await supabase.from("topics").select("*").order("created_at",{ascending:false}); if (error) throw error; return data; },
+  async insertTopic(row) { if (!IS_CONFIGURED) return local.insertTopic(row); const {data,error} = await supabase.from("topics").insert([row]).select().single(); if (error) throw error; return data; },
+  async deleteTopic(id) { if (!IS_CONFIGURED) return local.deleteTopic(id); await supabase.from("comments").delete().eq("topic_id",id); const {error} = await supabase.from("topics").delete().eq("id",id); if (error) throw error; },
+  async getComments(tid) { if (!IS_CONFIGURED) return local.getComments(tid); const {data,error} = await supabase.from("comments").select("*").eq("topic_id",tid).order("created_at",{ascending:false}); if (error) throw error; return data; },
+  async getAllCommitteeComments(cid) { if (!IS_CONFIGURED) return local.getAllCommitteeComments(cid); const {data,error} = await supabase.from("comments").select("*").eq("committee_id",cid); if (error) throw error; return data; },
+  async getAllComments() { if (!IS_CONFIGURED) return local.getAllComments(); const {data,error} = await supabase.from("comments").select("*"); if (error) throw error; return data; },
+  async insertComment(row) { if (!IS_CONFIGURED) return local.insertComment(row); const {data,error} = await supabase.from("comments").insert([row]).select().single(); if (error) throw error; return data; },
+  async deleteComment(id) { if (!IS_CONFIGURED) return local.deleteComment(id); const {error} = await supabase.from("comments").delete().eq("id",id); if (error) throw error; },
+};
+
+/* ═══════════════ MODERATOR LOGIN ═══════════════ */
+function ModLogin({ onSuccess, onCancel }) {
+  const [pw, setPw] = React.useState(""), [err, setErr] = React.useState(false);
+  const attempt = () => { if (pw === MODERATOR_PASSWORD) { onSuccess(); } else { setErr(true); setPw(""); } };
+  return (
+    <div className="overlay">
+      <div className="modal modal-relative" style={{maxWidth:360}}>
+        <h2>🔒 Moderator Login</h2>
+        <p className="modal-sub">Enter your moderator password to access management tools.</p>
+        {err && <div className="alert alert-error">Incorrect password. Please try again.</div>}
+        <div className="field-wrap">
+          <label className="field-label">Password</label>
+          <input className="f-input" type="password" value={pw} onChange={e=>{setPw(e.target.value);setErr(false);}} onKeyDown={e=>e.key==="Enter"&&attempt()} autoFocus />
+        </div>
+        <div className="btn-row">
+          <button className="btn btn-primary" onClick={attempt}>Sign In</button>
+          <button className="btn btn-ghost" onClick={onCancel}>Cancel</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════ CITIZEN ISSUE MODAL ═══════════════ */
+function CitizenIssueModal({ preselectedCommittee, onClose, onSubmitted, committees }) {
+  const [f, setF] = React.useState({ name:"", committee_id:preselectedCommittee||"", title:"", description:"", message:"", stance:"neutral" });
+  const [saving, setSaving] = React.useState(false);
+  const [err, setErr] = React.useState(null);
+
+  const submit = async () => {
+    if (!f.name.trim() || !f.committee_id || !f.title.trim() || !f.message.trim()) return;
+    setSaving(true); setErr(null);
+    try {
+      const topic = await db.insertTopic({ committee_id: f.committee_id, title: f.title.trim(), description: f.description.trim(), source: "public" });
+      await db.insertComment({ committee_id: f.committee_id, topic_id: topic.id, name: f.name.trim(), message: f.message.trim(), stance: f.stance });
+      onSubmitted(topic);
+    } catch { setErr("Submission failed. Please try again."); }
+    finally { setSaving(false); }
+  };
+
+  const valid = f.name.trim() && f.committee_id && f.title.trim() && f.message.trim();
+  return (
+    <div className="overlay">
+      <div className="modal modal-relative">
+        <button className="modal-close" onClick={onClose}>✕</button>
+        <h2>📝 Submit a New Issue</h2>
+        <p className="modal-sub">Raise a topic you'd like the town to address. Your issue and comment will be posted publicly and visible to all residents and town officials.</p>
+        {err && <div className="alert alert-error">{err}</div>}
+        <div className="inline-form">
+          <div className="full-span">
+            <label className="field-label">Your Name <span className="req">*</span></label>
+            <input className="f-input" placeholder="Full name (e.g. Jane Smith)" value={f.name} onChange={e=>setF(p=>({...p,name:e.target.value}))} />
+          </div>
+          <div className="full-span">
+            <label className="field-label">Which Committee or Board? <span className="req">*</span></label>
+            <select className="f-input" value={f.committee_id} onChange={e=>setF(p=>({...p,committee_id:e.target.value}))}>
+              <option value="">— Select a committee —</option>
+              {committees.map(c => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
+            </select>
+          </div>
+          <div className="full-span">
+            <label className="field-label">Issue Title <span className="req">*</span></label>
+            <input className="f-input" placeholder="Brief, descriptive title (e.g. Crosswalk lighting on Middle Street)" value={f.title} onChange={e=>setF(p=>({...p,title:e.target.value}))} />
+          </div>
+          <div className="full-span">
+            <label className="field-label">Background / Details <span style={{color:"#aaa",fontWeight:400,textTransform:"none",letterSpacing:0}}>(optional)</span></label>
+            <textarea className="f-input" placeholder="Any additional context that helps others understand the issue…" rows={2} value={f.description} onChange={e=>setF(p=>({...p,description:e.target.value}))} />
+          </div>
+          <div className="full-span">
+            <label className="field-label">Your Position on This Issue</label>
+            <div className="stance-row">
+              {Object.entries(STANCES).map(([key,s]) => (
+                <button key={key} className={`stance-btn${f.stance===key?" active":""}`}
+                  style={f.stance===key?{background:s.bg,color:s.color,borderColor:s.border}:{}}
+                  onClick={() => setF(p=>({...p,stance:key}))}>
+                  {s.emoji}<br/>{s.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="full-span">
+            <label className="field-label">Your Comment <span className="req">*</span></label>
+            <textarea className="f-input" placeholder="Explain why this issue matters to you and what you'd like the town to consider…" rows={4} value={f.message} onChange={e=>setF(p=>({...p,message:e.target.value}))} />
+          </div>
+        </div>
+        <div className="btn-row" style={{marginTop:6}}>
+          <button className="btn btn-primary" style={{flex:1,padding:"12px"}} disabled={!valid||saving} onClick={submit}>
+            {saving ? "Submitting…" : "Submit Issue & Comment"}
+          </button>
+          <button className="btn btn-ghost" onClick={onClose}>Cancel</button>
+        </div>
+        <p style={{fontSize:"0.75rem",color:"#aaa",marginTop:10,lineHeight:1.5}}>All submissions are public record and visible to all visitors.</p>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════ MOD ADD TOPIC PANEL ═══════════════ */
+function ModAddTopicPanel({ preselectedCommitteeId, committees, onAdded }) {
+  const [f, setF] = React.useState({ committee_id: preselectedCommitteeId||"", title:"", description:"" });
+  const [saving, setSaving] = React.useState(false);
+  const [err, setErr] = React.useState(null);
+  const [ok, setOk] = React.useState(false);
+
+  const submit = async () => {
+    if (!f.title.trim() || !f.committee_id) return;
+    setSaving(true); setErr(null);
+    try {
+      const t = await db.insertTopic({ committee_id: f.committee_id, title: f.title.trim(), description: f.description.trim(), source: "moderator" });
+      setF(p => ({...p, title:"", description:""}));
+      setOk(true); setTimeout(() => setOk(false), 3000);
+      onAdded(t);
+    } catch { setErr("Failed to add. Please try again."); }
+    finally { setSaving(false); }
+  };
+
+  return (
+    <div className="mod-panel">
+      <h3>➕ Add Official Agenda Item</h3>
+      <p className="mod-sub">Items you add appear as official topics for citizens to comment on.</p>
+      {err && <div className="alert alert-error">{err}</div>}
+      {ok && <div className="alert alert-success">✓ Agenda item added successfully.</div>}
+      <div className="inline-form">
+        {!preselectedCommitteeId && (
+          <div className="full-span">
+            <label className="field-label">Committee <span className="req">*</span></label>
+            <select className="f-input" value={f.committee_id} onChange={e=>setF(p=>({...p,committee_id:e.target.value}))}>
+              <option value="">— Select a committee —</option>
+              {committees.map(c => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
+            </select>
+          </div>
+        )}
+        <div className="full-span">
+          <label className="field-label">Topic Title <span className="req">*</span></label>
+          <input className="f-input" placeholder="e.g. Short-Term Rental Ordinance Amendment" value={f.title} onChange={e=>setF(p=>({...p,title:e.target.value}))} />
+        </div>
+        <div className="full-span">
+          <label className="field-label">Description <span style={{color:"#aaa",fontWeight:400,textTransform:"none",letterSpacing:0}}>(optional)</span></label>
+          <textarea className="f-input" placeholder="Brief summary of the agenda item…" rows={2} value={f.description} onChange={e=>setF(p=>({...p,description:e.target.value}))} />
+        </div>
+        <div>
+          <button className="btn btn-gold" onClick={submit} disabled={!f.title.trim()||!f.committee_id||saving}>
+            {saving ? "Saving…" : "Add Agenda Item"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   MAIN APP
+═══════════════════════════════════════════════════════════════ */
+function App() {
+  /* ── Navigation ── */
+  const [page, setPage] = React.useState("home");
+  const [activeCommittee, setActiveCommittee] = React.useState(null);
+  const [activeTopic, setActiveTopic] = React.useState(null);
+
+  /* ── Auth ── */
+  const [isMod, setIsMod] = React.useState(false);
+  const [showLogin, setShowLogin] = React.useState(false);
+
+  /* ── Committee order (persisted) ── */
+  const [committees, setCommittees] = React.useState(() => loadSavedOrder());
+  const [orderChanged, setOrderChanged] = React.useState(false);
+  const [orderSaved, setOrderSaved] = React.useState(false);
+
+  /* ── Drag state ── */
+  const dragSrcIdx = React.useRef(null);
+
+  /* ── Modals ── */
+  const [showCitizenModal, setShowCitizenModal] = React.useState(false);
+  const [citizenModalCommittee, setCitizenModalCommittee] = React.useState("");
+
+  /* ── Data ── */
+  const [allTopics, setAllTopics] = React.useState([]);
+  const [allTopicsLoaded, setAllTopicsLoaded] = React.useState(false);
+  const [allCommentCounts, setAllCommentCounts] = React.useState({});
+  const [topics, setTopics] = React.useState([]);
+  const [topicCounts, setTopicCounts] = React.useState({});
+  const [comments, setComments] = React.useState([]);
+  const [loading, setLoading] = React.useState(false);
+
+  /* ── Comment form ── */
+  const [form, setForm] = React.useState({ name:"", message:"", stance:"neutral" });
+  const [submitting, setSubmitting] = React.useState(false);
+  const [formAlert, setFormAlert] = React.useState(null);
+  const [filter, setFilter] = React.useState("all");
+  const [sortDir, setSortDir] = React.useState("desc");
+  const [issueFilter, setIssueFilter] = React.useState("all");
+
+  /* ── Load all topics + counts ── */
+  const loadAllTopics = React.useCallback(async () => {
+    try {
+      const [ts, cs] = await Promise.all([db.getAllTopics(), db.getAllComments()]);
+      setAllTopics(ts);
+      const cc = {};
+      cs.forEach(c => {
+        if (!cc[c.topic_id]) cc[c.topic_id] = {total:0,favor:0,neutral:0,against:0};
+        cc[c.topic_id].total++;
+        cc[c.topic_id][c.stance] = (cc[c.topic_id][c.stance]||0) + 1;
+      });
+      setAllCommentCounts(cc);
+      setAllTopicsLoaded(true);
+    } catch {}
+  }, []);
+
+  React.useEffect(() => { if (page === "home" || page === "allissues") loadAllTopics(); }, [page]);
+
+  /* ── Load topics for committee ── */
+  React.useEffect(() => {
+    if (page !== "committee" || !activeCommittee) return;
+    setLoading(true); setTopics([]); setTopicCounts({});
+    (async () => {
+      try {
+        const [ts, allC] = await Promise.all([db.getTopics(activeCommittee.id), db.getAllCommitteeComments(activeCommittee.id)]);
+        setTopics(ts);
+        const tc = {};
+        allC.forEach(c => { if (!tc[c.topic_id]) tc[c.topic_id] = {total:0,favor:0,neutral:0,against:0}; tc[c.topic_id].total++; tc[c.topic_id][c.stance] = (tc[c.topic_id][c.stance]||0)+1; });
+        setTopicCounts(tc);
+      } catch {}
+      finally { setLoading(false); }
+    })();
+  }, [page, activeCommittee?.id]);
+
+  /* ── Load comments for topic ── */
+  React.useEffect(() => {
+    if (page !== "topic" || !activeTopic) return;
+    setLoading(true); setComments([]);
+    db.getComments(activeTopic.id).then(setComments).catch(() => setFormAlert({type:"error",msg:"Could not load comments."})).finally(() => setLoading(false));
+  }, [page, activeTopic?.id]);
+
+  /* ── Realtime ── */
+  React.useEffect(() => {
+    if (!IS_CONFIGURED || page !== "topic" || !activeTopic) return;
+    const ch = supabase.channel("comments-"+activeTopic.id)
+      .on("postgres_changes", {event:"INSERT",schema:"public",table:"comments",filter:`topic_id=eq.${activeTopic.id}`}, p => setComments(prev => [p.new, ...prev]))
+      .subscribe();
+    return () => supabase.removeChannel(ch);
+  }, [page, activeTopic?.id]);
+
+  /* ── Nav helpers ── */
+  const goHome = () => { setPage("home"); setActiveCommittee(null); setActiveTopic(null); setFormAlert(null); };
+  const goAllIssues = () => { setPage("allissues"); setActiveCommittee(null); setActiveTopic(null); setIssueFilter("all"); };
+  const goCommittee = (c) => { setPage("committee"); setActiveCommittee(c); setActiveTopic(null); setFormAlert(null); setForm({name:"",message:"",stance:"neutral"}); };
+  const goTopic = (t, committee) => {
+    const c = committee || committeeById(t.committee_id);
+    setActiveCommittee(c||null);
+    setPage("topic"); setActiveTopic(t); setFormAlert(null); setFilter("all"); setSortDir("desc");
+    setForm({name:"",message:"",stance:"neutral"});
+  };
+
+  /* ── Submit comment ── */
+  const handleSubmit = async () => {
+    if (!form.name.trim() || !form.message.trim()) return;
+    setSubmitting(true); setFormAlert(null);
+    try {
+      const row = { committee_id: activeCommittee.id, topic_id: activeTopic.id, name: form.name.trim(), message: form.message.trim(), stance: form.stance };
+      const c = await db.insertComment(row);
+      if (!IS_CONFIGURED) setComments(prev => [c, ...prev]);
+      setForm({name:"",message:"",stance:"neutral"});
+      setTopicCounts(prev => { const e = prev[activeTopic.id]||{total:0,favor:0,neutral:0,against:0}; return {...prev, [activeTopic.id]: {...e,total:e.total+1,[form.stance]:(e[form.stance]||0)+1}}; });
+      setFormAlert({type:"success",msg:"✓ Your comment was submitted successfully."});
+      setTimeout(() => setFormAlert(null), 5000);
+    } catch { setFormAlert({type:"error",msg:"Submission failed. Please try again."}); }
+    finally { setSubmitting(false); }
+  };
+
+  /* ── Delete comment ── */
+  const handleDeleteComment = async (id) => {
+    if (!isMod || !window.confirm("Delete this comment?")) return;
+    try { await db.deleteComment(id); setComments(prev => prev.filter(c => c.id !== id)); } catch { window.alert("Failed."); }
+  };
+
+  /* ── Delete topic ── */
+  const handleDeleteTopic = async (e, tid) => {
+    e.stopPropagation();
+    if (!isMod || !window.confirm("Delete this topic and all its comments?")) return;
+    try { await db.deleteTopic(tid); setTopics(prev => prev.filter(t => t.id !== tid)); setAllTopics(prev => prev.filter(t => t.id !== tid)); } catch { window.alert("Failed."); }
+  };
+
+  /* ── Drag-and-drop reorder (moderator only) ── */
+  const handleDragStart = (e, idx) => {
+    dragSrcIdx.current = idx;
+    e.dataTransfer.effectAllowed = "move";
+    // small delay so the card appears faded during drag
+    setTimeout(() => {
+      const cards = document.querySelectorAll(".c-card");
+      if (cards[idx]) cards[idx].classList.add("dragging");
+    }, 0);
+  };
+  const handleDragOver = (e, idx) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  };
+  const handleDragEnter = (e, idx) => {
+    e.currentTarget.classList.add("drag-over");
+  };
+  const handleDragLeave = (e) => {
+    e.currentTarget.classList.remove("drag-over");
+  };
+  const handleDrop = (e, toIdx) => {
+    e.preventDefault();
+    e.currentTarget.classList.remove("drag-over");
+    const fromIdx = dragSrcIdx.current;
+    if (fromIdx === null || fromIdx === toIdx) return;
+    setCommittees(prev => {
+      const next = [...prev];
+      const [moved] = next.splice(fromIdx, 1);
+      next.splice(toIdx, 0, moved);
+      return next;
+    });
+    setOrderChanged(true);
+    setOrderSaved(false);
+    dragSrcIdx.current = null;
+  };
+  const handleDragEnd = () => {
+    dragSrcIdx.current = null;
+    document.querySelectorAll(".c-card").forEach(el => { el.classList.remove("dragging"); el.classList.remove("drag-over"); });
+  };
+
+  /* ── Move up/down (keyboard-friendly alternative) ── */
+  const moveCommittee = (idx, dir) => {
+    const toIdx = idx + dir;
+    if (toIdx < 0 || toIdx >= committees.length) return;
+    setCommittees(prev => {
+      const next = [...prev];
+      const [moved] = next.splice(idx, 1);
+      next.splice(toIdx, 0, moved);
+      return next;
+    });
+    setOrderChanged(true);
+    setOrderSaved(false);
+  };
+
+  const saveOrder = () => {
+    saveSavedOrder(committees);
+    setOrderSaved(true);
+    setOrderChanged(false);
+    setTimeout(() => setOrderSaved(false), 2500);
+  };
+
+  const resetOrder = () => {
+    if (!window.confirm("Reset committees to their default order?")) return;
+    localStorage.removeItem(ORDER_KEY);
+    setCommittees(ALL_COMMITTEES);
+    setOrderChanged(false);
+  };
+
+  /* ── Derived ── */
+  const filtered = comments.filter(c => filter === "all" || c.stance === filter).sort((a,b) => sortDir === "desc" ? new Date(b.created_at)-new Date(a.created_at) : new Date(a.created_at)-new Date(b.created_at));
+  const tc = activeTopic ? (topicCounts[activeTopic.id] || {total:0,favor:0,neutral:0,against:0}) : {};
+
+  const committeeSummary = React.useMemo(() => {
+    const s = {};
+    ALL_COMMITTEES.forEach(c => { s[c.id] = {topics:0,comments:0}; });
+    allTopics.forEach(t => { if (s[t.committee_id]) s[t.committee_id].topics++; });
+    Object.entries(allCommentCounts).forEach(([tid,cnt]) => {
+      const t = allTopics.find(x => x.id == tid);
+      if (t && s[t.committee_id]) s[t.committee_id].comments += cnt.total;
+    });
+    return s;
+  }, [allTopics, allCommentCounts]);
+
+  const filteredAllIssues = React.useMemo(() => {
+    return issueFilter === "all" ? allTopics : allTopics.filter(t => t.committee_id === issueFilter);
+  }, [allTopics, issueFilter]);
+
+  /* ── Topic card ── */
+  const TopicCard = ({ t }) => {
+    const cnt = allCommentCounts[t.id] || topicCounts[t.id] || {total:0,favor:0,neutral:0,against:0};
+    const isOfficial = t.source === "moderator";
+    const comm = committeeById(t.committee_id);
+    return (
+      <div className={`topic-card${isOfficial?" official":""}`} style={isOfficial?{borderTopColor:comm.color}:{}} onClick={() => goTopic(t,comm)}>
+        {isMod && <button className="del-btn" onClick={e=>handleDeleteTopic(e,t.id)} title="Delete topic">✕</button>}
+        <span className={`topic-badge ${isOfficial?"official-badge":"public-badge"}`}>{isOfficial?"📌 Official":"💬 Community"}</span>
+        <h3>{t.title}</h3>
+        {t.description && <p className="tdesc">{t.description}</p>}
+        <div className="topic-card-footer">
+          <span>{cnt.total} comment{cnt.total!==1?"s":""}</span>
+          {cnt.total > 0 && (
+            <div className="stance-pills">
+              <span className="s-pill" style={{background:"#d4edda",color:"#155724",borderColor:"#c3e6cb"}}>✅ {cnt.favor}</span>
+              <span className="s-pill" style={{background:"#fff3cd",color:"#856404",borderColor:"#ffeeba"}}>⚖️ {cnt.neutral}</span>
+              <span className="s-pill" style={{background:"#f8d7da",color:"#721c24",borderColor:"#f5c6cb"}}>❌ {cnt.against}</span>
+            </div>
+          )}
+        </div>
+        {cnt.total > 0 && (
+          <div className="progress-bar" style={{marginTop:7}}>
+            <div className="progress-seg" style={{width:`${(cnt.favor/cnt.total)*100}%`,background:"#2d9e5c"}}/>
+            <div className="progress-seg" style={{width:`${(cnt.neutral/cnt.total)*100}%`,background:"#e6c84a"}}/>
+            <div className="progress-seg" style={{width:`${(cnt.against/cnt.total)*100}%`,background:"#d9534f"}}/>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  /* ══════════════════════════════════════════
+     HEADER
+  ══════════════════════════════════════════ */
+  const isHome = page === "home" || page === "allissues";
+  const renderHeader = () => (
+    <header className="header">
+      <div className="header-inner">
+        {!isHome && (
+          <div className="breadcrumb">
+            <button className="bc-btn" onClick={goHome}>🏝️ Home</button>
+            {activeCommittee && page !== "allissues" && (
+              <><span className="bc-sep">›</span><button className="bc-btn" onClick={()=>goCommittee(activeCommittee)}>{activeCommittee.icon} {activeCommittee.name}</button></>
+            )}
+            {activeTopic && <><span className="bc-sep">›</span><span style={{color:"rgba(255,255,255,0.6)",fontSize:"0.79rem"}}>{activeTopic.title}</span></>}
+          </div>
+        )}
+        {isHome && <div className="seal-badge">🏝️ Sullivan's Island, South Carolina</div>}
+        <div className="header-row">
+          <div>
+            <h1>
+              {page==="home" && "Citizen Input Portal"}
+              {page==="allissues" && "All Issues"}
+              {page==="committee" && `${activeCommittee?.icon} ${activeCommittee?.name}`}
+              {page==="topic" && activeTopic?.title}
+            </h1>
+            <p className="sub">
+              {page==="home" && "Share your voice with Town Council and its committees. All comments are public and reviewed by town officials."}
+              {page==="allissues" && "Browse every open issue across all committees and boards."}
+              {page==="committee" && activeCommittee?.desc}
+              {page==="topic" && `Comments on this item are visible to all residents and reviewed by ${activeCommittee?.name}.`}
+            </p>
+          </div>
+          <div style={{display:"flex",flexDirection:"column",gap:6,alignItems:"flex-end"}}>
+            {!isMod
+              ? <button className="mod-btn" onClick={()=>setShowLogin(true)}>🔒 Moderator</button>
+              : <button className="mod-btn active" onClick={()=>{if(window.confirm("Sign out as moderator?"))setIsMod(false);}}>🟡 Mod Active — Sign Out</button>
+            }
+          </div>
+        </div>
+        {isHome && (
+          <div className="nav-tabs">
+            <button className={`nav-tab${page==="home"?" active":""}`} onClick={goHome}>By Committee</button>
+            <button className={`nav-tab${page==="allissues"?" active":""}`} onClick={goAllIssues}>All Issues</button>
+          </div>
+        )}
+      </div>
+    </header>
+  );
+
+  /* ══════════════════════════════════════════
+     RENDER
+  ══════════════════════════════════════════ */
+  return (
+    <>
+      {showLogin && <ModLogin onSuccess={()=>{setIsMod(true);setShowLogin(false);}} onCancel={()=>setShowLogin(false)} />}
+      {showCitizenModal && (
+        <CitizenIssueModal
+          preselectedCommittee={citizenModalCommittee}
+          committees={committees}
+          onClose={() => setShowCitizenModal(false)}
+          onSubmitted={(newTopic) => {
+            setShowCitizenModal(false);
+            loadAllTopics();
+            goTopic(newTopic, committeeById(newTopic.committee_id));
+          }}
+        />
+      )}
+
+      {renderHeader()}
+
+      <main className="main">
+
+        {/* ══════════ HOME — BY COMMITTEE ══════════ */}
+        {page==="home" && (
+          <>
+            {!IS_CONFIGURED && (
+              <div className="config-banner">
+                <strong>⚠️ Demo Mode:</strong> Comments save only in your browser. Follow <strong>README.md</strong> to connect Supabase — replace <code>YOUR_SUPABASE_URL</code> and <code>YOUR_SUPABASE_ANON_KEY</code> at the top of this file.
+              </div>
+            )}
+
+            {/* Citizen CTA */}
+            {!isMod && (
+              <div className="cta-bar">
+                <div className="cta-text">
+                  <h3>Have an issue you'd like the town to address?</h3>
+                  <p>Raise any topic — from noise concerns to infrastructure — with the appropriate committee. It takes less than two minutes.</p>
+                </div>
+                <button className="cta-bar-btn" onClick={()=>{setCitizenModalCommittee("");setShowCitizenModal(true);}}>
+                  + Submit a New Issue
+                </button>
+              </div>
+            )}
+
+            {/* Moderator tools */}
+            {isMod && (
+              <>
+                <ModAddTopicPanel preselectedCommitteeId="" committees={committees} onAdded={t=>{setAllTopics(prev=>[t,...prev]);}} />
+
+                {/* Reorder hint */}
+                <div className="reorder-hint">
+                  <span className="rh-icon">⠿</span>
+                  <span><strong>Reorder mode active.</strong> Drag and drop committee cards to rearrange them, or use the ▲ ▼ arrows. Changes apply immediately for all visitors after you click Save Order.</span>
+                  <div style={{display:"flex",gap:8,marginLeft:"auto",flexShrink:0}}>
+                    {(orderChanged || orderSaved) && (
+                      <button className={`save-order-btn${orderSaved?" saved":""}`} onClick={saveOrder}>
+                        {orderSaved ? "✓ Saved!" : "Save Order"}
+                      </button>
+                    )}
+                    <button className="save-order-btn" style={{background:"#eee",color:"#555"}} onClick={resetOrder}>Reset</button>
+                  </div>
+                </div>
+              </>
+            )}
+
+            <div className="committee-grid">
+              {committees.map((c, idx) => {
+                const s = committeeSummary[c.id] || {topics:0,comments:0};
+                return (
+                  <div
+                    key={c.id}
+                    className={`c-card${isMod?" drag-mode":""}`}
+                    draggable={isMod}
+                    onDragStart={isMod ? e => handleDragStart(e, idx) : undefined}
+                    onDragOver={isMod ? e => handleDragOver(e, idx) : undefined}
+                    onDragEnter={isMod ? e => handleDragEnter(e, idx) : undefined}
+                    onDragLeave={isMod ? handleDragLeave : undefined}
+                    onDrop={isMod ? e => handleDrop(e, idx) : undefined}
+                    onDragEnd={isMod ? handleDragEnd : undefined}
+                    onClick={isMod ? undefined : () => goCommittee(c)}
+                  >
+                    <div className="accent" style={{background:c.color}} />
+
+                    {/* Drag handle (mod) */}
+                    {isMod && (
+                      <div className="drag-handle" title="Drag to reorder">
+                        <span/><span/><span/>
+                      </div>
+                    )}
+
+                    {/* Up/down arrows (mod) */}
+                    {isMod && (
+                      <div style={{position:"absolute",top:8,right:36,display:"flex",flexDirection:"column",gap:2}}>
+                        <button onClick={e=>{e.stopPropagation();moveCommittee(idx,-1);}} disabled={idx===0}
+                          style={{background:"none",border:"none",cursor:idx===0?"default":"pointer",color:idx===0?"#ddd":"#999",fontSize:"0.7rem",lineHeight:1,padding:"1px 3px",transition:"color .15s"}}
+                          title="Move up">▲</button>
+                        <button onClick={e=>{e.stopPropagation();moveCommittee(idx,1);}} disabled={idx===committees.length-1}
+                          style={{background:"none",border:"none",cursor:idx===committees.length-1?"default":"pointer",color:idx===committees.length-1?"#ddd":"#999",fontSize:"0.7rem",lineHeight:1,padding:"1px 3px",transition:"color .15s"}}
+                          title="Move down">▼</button>
+                      </div>
+                    )}
+
+                    <span className="cicon">{c.icon}</span>
+                    <h3>{c.name}</h3>
+                    <p className="cdesc">{c.desc}</p>
+                    <div className="c-card-footer">
+                      <span>{s.topics} topic{s.topics!==1?"s":""} · {s.comments} comment{s.comments!==1?"s":""}</span>
+                      {!isMod && <span style={{color:c.color,fontWeight:700,fontSize:"0.8rem"}}>View →</span>}
+                      {isMod && <span style={{color:"#bbb",fontSize:"0.75rem"}}>#{idx+1}</span>}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
+        )}
+
+        {/* ══════════ ALL ISSUES ══════════ */}
+        {page==="allissues" && (
+          <>
+            <div className="issues-toolbar">
+              <h2>All Open Issues ({filteredAllIssues.length})</h2>
+              <select className="ctrl-sel" value={issueFilter} onChange={e=>setIssueFilter(e.target.value)}>
+                <option value="all">All Committees</option>
+                {committees.map(c => <option key={c.id} value={c.id}>{c.icon} {c.name}</option>)}
+              </select>
+              <button className="btn btn-outline btn-sm" onClick={()=>{setCitizenModalCommittee("");setShowCitizenModal(true);}}>
+                + Submit Issue
+              </button>
+            </div>
+            {!allTopicsLoaded && <div className="loading">Loading issues…</div>}
+            {allTopicsLoaded && filteredAllIssues.length===0 && (
+              <div className="empty-state">
+                <span className="e-icon">📋</span>
+                <p>No issues found{issueFilter!=="all"?` for ${committeeById(issueFilter).name}`:""}.{issueFilter==="all"?" Be the first to submit one!":""}</p>
+              </div>
+            )}
+            {allTopicsLoaded && filteredAllIssues.map(t => {
+              const cnt = allCommentCounts[t.id] || {total:0,favor:0,neutral:0,against:0};
+              const isOfficial = t.source === "moderator";
+              const comm = committeeById(t.committee_id);
+              return (
+                <div key={t.id} className="issue-row" onClick={()=>goTopic(t,comm)}>
+                  <span className="ir-icon">{comm.icon}</span>
+                  <div className="ir-body">
+                    <div className="ir-title">{t.title}</div>
+                    <div className="ir-meta">
+                      <span style={{color:comm.color,fontWeight:600}}>{comm.name}</span>
+                      {t.description && <span style={{marginLeft:8,color:"#bbb"}}>· {t.description.slice(0,80)}{t.description.length>80?"…":""}</span>}
+                    </div>
+                  </div>
+                  <div className="ir-right">
+                    <span className={`ir-badge ${isOfficial?"official":"community"}`}>{isOfficial?"📌 Official":"💬 Community"}</span>
+                    {cnt.total>0 && (
+                      <div className="mini-pills">
+                        <span className="mini-pill" style={{background:"#d4edda",color:"#155724",borderColor:"#c3e6cb"}}>✅{cnt.favor}</span>
+                        <span className="mini-pill" style={{background:"#fff3cd",color:"#856404",borderColor:"#ffeeba"}}>⚖️{cnt.neutral}</span>
+                        <span className="mini-pill" style={{background:"#f8d7da",color:"#721c24",borderColor:"#f5c6cb"}}>❌{cnt.against}</span>
+                      </div>
+                    )}
+                    <span style={{fontSize:"0.74rem",color:"#bbb"}}>{cnt.total} comment{cnt.total!==1?"s":""}</span>
+                  </div>
+                  {isMod && <button className="del-btn" style={{position:"static",marginLeft:4}} onClick={e=>handleDeleteTopic(e,t.id)} title="Delete">✕</button>}
+                </div>
+              );
+            })}
+          </>
+        )}
+
+        {/* ══════════ COMMITTEE — topic list ══════════ */}
+        {page==="committee" && (
+          <>
+            {isMod && <ModAddTopicPanel preselectedCommitteeId={activeCommittee.id} committees={committees} onAdded={t=>{setTopics(prev=>[...prev,t]);setAllTopics(prev=>[t,...prev]);}} />}
+            {!isMod && (
+              <div className="cta-bar" style={{marginBottom:24}}>
+                <div className="cta-text">
+                  <h3>Don't see your issue listed?</h3>
+                  <p>Submit a new topic for this committee to consider — your comment will be attached automatically.</p>
+                </div>
+                <button className="cta-bar-btn" onClick={()=>{setCitizenModalCommittee(activeCommittee.id);setShowCitizenModal(true);}}>
+                  + Submit a New Issue
+                </button>
+              </div>
+            )}
+            {loading && <div className="loading">Loading topics…</div>}
+            {!loading && topics.length===0 && (
+              <div className="empty-state">
+                <span className="e-icon">📋</span>
+                <p>{isMod?"No topics yet. Use the panel above to add the first agenda item.":"No agenda items yet. Use the button above to be the first to raise an issue!"}</p>
+              </div>
+            )}
+            {!loading && topics.length>0 && (
+              <>
+                <div className="page-intro">
+                  <h2>Agenda Topics</h2>
+                  <p>Click any topic to read public comments or add your own. <span style={{color:"#1a56db"}}>📌 Official items</span> are posted by the town; <span style={{color:"#777"}}>💬 Community topics</span> are raised by residents.</p>
+                </div>
+                <div className="topics-grid">
+                  {topics.map(t => <TopicCard key={t.id} t={t} />)}
+                </div>
+              </>
+            )}
+          </>
+        )}
+
+        {/* ══════════ TOPIC — comments ══════════ */}
+        {page==="topic" && (
+          <div className="two-col">
+            <div className="form-card">
+              <h2>Add Your Comment</h2>
+              <p className="form-sub">Your name, position, and comment will be posted publicly and reviewed by town officials.</p>
+              {formAlert && <div className={`alert alert-${formAlert.type}`}>{formAlert.msg}</div>}
+              <div className="field-wrap">
+                <label className="field-label">Your Name <span className="req">*</span></label>
+                <input className="f-input" placeholder="Full name" value={form.name} onChange={e=>setForm(p=>({...p,name:e.target.value}))} />
+              </div>
+              <label className="field-label">Your Position on This Issue</label>
+              <div className="stance-row">
+                {Object.entries(STANCES).map(([key,s]) => (
+                  <button key={key} className={`stance-btn${form.stance===key?" active":""}`}
+                    style={form.stance===key?{background:s.bg,color:s.color,borderColor:s.border}:{}}
+                    onClick={()=>setForm(p=>({...p,stance:key}))}>
+                    {s.emoji}<br/>{s.label}
+                  </button>
+                ))}
+              </div>
+              <div className="field-wrap">
+                <label className="field-label">Your Comment <span className="req">*</span></label>
+                <textarea className="f-input" placeholder="Share your thoughts, concerns, or support…" rows={5} value={form.message} onChange={e=>setForm(p=>({...p,message:e.target.value}))} />
+              </div>
+              <button className="submit-btn" style={{background:activeCommittee?.color||"#1a3a5c"}}
+                disabled={!form.name.trim()||!form.message.trim()||submitting} onClick={handleSubmit}>
+                {submitting ? "Submitting…" : "Submit Comment"}
+              </button>
+              <p style={{fontSize:"0.73rem",color:"#aaa",marginTop:8,lineHeight:1.5}}>All submissions are public record.</p>
+            </div>
+
+            <div>
+              {tc.total>0 && (
+                <div className="stats-row">
+                  {Object.entries(STANCES).map(([key,s]) => (
+                    <div key={key} className={`stat-chip${filter!=="all"&&filter!==key?" dim":""}`}
+                      style={{background:s.bg,color:s.color,borderColor:s.border}}
+                      onClick={()=>setFilter(filter===key?"all":key)}>
+                      {s.emoji} {tc[key]||0} {s.label}
+                    </div>
+                  ))}
+                </div>
+              )}
+              <div className="c-header">
+                <h2>{loading?"Loading…":`${filtered.length} Comment${filtered.length!==1?"s":""}`}</h2>
+                <div className="controls">
+                  <select className="ctrl-sel" value={filter} onChange={e=>setFilter(e.target.value)}>
+                    <option value="all">All Positions</option>
+                    <option value="favor">In Favor</option>
+                    <option value="neutral">Neutral</option>
+                    <option value="against">Not in Favor</option>
+                  </select>
+                  <select className="ctrl-sel" value={sortDir} onChange={e=>setSortDir(e.target.value)}>
+                    <option value="desc">Newest First</option>
+                    <option value="asc">Oldest First</option>
+                  </select>
+                </div>
+              </div>
+              {loading && <div className="loading">Loading comments…</div>}
+              {!loading && filtered.length===0 && (
+                <div className="empty-state">
+                  <span className="e-icon">🌊</span>
+                  <p>{comments.length===0?"No comments yet — be the first to weigh in!":"No comments match this filter."}</p>
+                </div>
+              )}
+              {!loading && filtered.map(c => {
+                const s = STANCES[c.stance] || STANCES.neutral;
+                return (
+                  <div key={c.id} className="comment-card" style={{borderLeftColor:s.border}}>
+                    {isMod && <button className="del-btn" onClick={()=>handleDeleteComment(c.id)} title="Delete comment">✕</button>}
+                    <span className="stance-tag" style={{background:s.bg,color:s.color,borderColor:s.border}}>{s.emoji} {s.label}</span>
+                    <div className="comment-msg">{c.message}</div>
+                    <div className="comment-meta"><span>— {c.name}</span><span>{timeAgo(c.created_at)}</span></div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </main>
+
+      <footer className="footer">
+        Town of Sullivan's Island · Citizen Input Portal · All submissions are public record
+        {!IS_CONFIGURED && <> · <em>Demo mode — see README.md to go live</em></>}
+      </footer>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App/>);
+</script>
+</body>
+</html>
