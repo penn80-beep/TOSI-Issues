@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Sullivan's Island — Cameras in the Accreted Land</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400&family=Source+Serif+4:opsz,wght@8..60,300;8..60,400;8..60,600&display=swap" rel="stylesheet"/>
+  <style>
+    :root {
+      --navy:#1a3a5c; --sand:#f4f1eb; --gold:#e6c84a; --green:#2d6a4f;
+      --text:#1a1a1a; --muted:#666; --bdr:#ddd;
+      --favor-bg:#d4edda; --favor-col:#155724; --favor-bdr:#b7dfc4;
+      --neu-bg:#fff3cd;   --neu-col:#7a5c00;   --neu-bdr:#f0d97a;
+      --ag-bg:#f8d7da;    --ag-col:#721c24;    --ag-bdr:#f1b0b7;
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    body{background:var(--sand);font-family:'Source Serif 4',Georgia,serif;color:var(--text);min-height:100vh;}
+
+    .hero{background:var(--navy);color:#fff;padding:44px 24px 34px;position:relative;overflow:hidden;}
+    .hero::before{content:'';position:absolute;inset:0;background-image:repeating-linear-gradient(45deg,transparent,transparent 60px,rgba(255,255,255,0.02) 60px,rgba(255,255,255,0.02) 61px);}
+    .hero-inner{max-width:680px;margin:0 auto;position:relative;z-index:1;}
+    .hero-tag{display:inline-flex;align-items:center;gap:7px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:4px;padding:5px 13px;font-size:0.67rem;letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;color:rgba(255,255,255,0.8);}
+    .hero h1{font-family:'Playfair Display',serif;font-size:clamp(1.6rem,5vw,2.5rem);font-weight:900;line-height:1.1;letter-spacing:-0.5px;margin-bottom:12px;}
+    .hero h1 em{font-style:italic;color:var(--gold);}
+    .hero-desc{font-size:0.92rem;line-height:1.75;opacity:0.78;font-weight:300;}
+    .hero-meta{display:flex;gap:18px;flex-wrap:wrap;margin-top:18px;padding-top:16px;border-top:1px solid rgba(255,255,255,0.12);font-size:0.73rem;color:rgba(255,255,255,0.5);}
+
+    .page{max-width:680px;margin:0 auto;padding:32px 24px 60px;}
+
+    .slbl{font-size:0.67rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--navy);margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+    .slbl::after{content:'';flex:1;height:1px;background:var(--bdr);}
+
+    .context-card{background:#fff;border:1px solid var(--bdr);border-left:4px solid var(--navy);border-radius:5px;padding:20px 22px;margin-bottom:26px;}
+    .context-card p{font-size:0.9rem;line-height:1.8;color:#333;margin-bottom:10px;}
+    .context-card p:last-child{margin-bottom:0;}
+    .context-card strong{color:var(--navy);}
+
+    .step{display:flex;align-items:center;gap:10px;font-size:0.67rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--navy);margin-bottom:11px;}
+    .snum{width:24px;height:24px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:700;flex-shrink:0;transition:background .3s;}
+    .snum.done{background:var(--green);}
+
+    .stance-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:26px;}
+    @media(max-width:460px){.stance-grid{grid-template-columns:1fr;}}
+    .sbtn{padding:16px 10px;border:2px solid var(--bdr);border-radius:6px;background:#fff;cursor:pointer;font-family:inherit;text-align:center;transition:all .2s;line-height:1.4;}
+    .sbtn:hover{border-color:#bbb;transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,0.07);}
+    .sbtn .si{font-size:1.7rem;display:block;margin-bottom:5px;}
+    .sbtn .sl{font-size:0.8rem;font-weight:700;display:block;margin-bottom:2px;}
+    .sbtn .sd{font-size:0.7rem;color:var(--muted);line-height:1.35;}
+    .sbtn.selected{transform:translateY(-2px);box-shadow:0 6px 16px rgba(0,0,0,0.1);}
+    .sbtn.favor.selected  {background:var(--favor-bg);border-color:var(--favor-bdr);}
+    .sbtn.neutral.selected{background:var(--neu-bg);  border-color:var(--neu-bdr);}
+    .sbtn.against.selected{background:var(--ag-bg);   border-color:var(--ag-bdr);}
+
+    .fhint{font-size:0.77rem;color:var(--muted);margin-bottom:8px;line-height:1.5;}
+    textarea.note-input{width:100%;padding:12px 14px;border:1px solid var(--bdr);border-radius:4px;font-family:inherit;font-size:0.9rem;color:var(--text);background:#fafaf8;resize:vertical;min-height:85px;transition:border-color .18s;margin-bottom:22px;line-height:1.65;}
+    textarea.note-input:focus{outline:none;border-color:var(--navy);background:#fff;}
+    textarea.note-input::placeholder{color:#ccc;}
+
+    .council-list{display:flex;flex-direction:column;gap:6px;margin-bottom:22px;}
+    .citem{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--bdr);border-radius:5px;padding:10px 14px;cursor:pointer;transition:all .15s;user-select:none;}
+    .citem:hover{border-color:#bbb;}
+    .citem.on{border-color:var(--navy);background:#eef3f9;}
+    .chkbox{width:18px;height:18px;border:2px solid #ccc;border-radius:3px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:0.68rem;color:#fff;transition:all .15s;}
+    .citem.on .chkbox{background:var(--navy);border-color:var(--navy);}
+    .cname{font-size:0.86rem;font-weight:700;}
+    .crole{font-size:0.71rem;color:var(--muted);}
+    .cemail{font-size:0.7rem;color:#bbb;margin-top:1px;}
+    .cc-divider{border:none;border-top:1px solid var(--bdr);margin:4px 0 2px;}
+    .cc-label{font-size:0.67rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:#aaa;margin:2px 0 4px;}
+
+    .sel-row{display:flex;gap:8px;margin-bottom:9px;}
+    .slink{color:var(--navy);cursor:pointer;text-decoration:none;background:#fff;border:1px solid var(--bdr);border-radius:3px;font-family:inherit;font-size:0.76rem;font-weight:600;padding:4px 11px;transition:border-color .15s,background .15s;}
+    .slink:hover{border-color:#aaa;background:#f5f5f5;}
+
+    .divider{border:none;border-top:1px solid var(--bdr);margin:24px 0;}
+    .alert{padding:11px 15px;border-radius:4px;font-size:0.82rem;margin-bottom:14px;border:1px solid;line-height:1.5;display:none;}
+    .alert.on{display:block;}
+    .alert-w{background:#fff3cd;border-color:#f0d97a;color:#7a5c00;}
+
+    .send-panel{background:#fff;border:1px solid var(--bdr);border-radius:6px;overflow:hidden;}
+    .recip-strip{background:#f7f9fc;border-bottom:1px solid var(--bdr);padding:11px 16px;display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap;}
+    .recip-label{font-size:0.69rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--navy);white-space:nowrap;padding-top:2px;min-width:24px;}
+    .recip-emails{font-size:0.74rem;color:var(--muted);flex:1;line-height:1.65;word-break:break-all;}
+    .copy-addr-btn{background:var(--navy);color:#fff;border:none;border-radius:3px;padding:5px 11px;font-family:inherit;font-size:0.72rem;font-weight:700;cursor:pointer;white-space:nowrap;transition:filter .15s;flex-shrink:0;}
+    .copy-addr-btn:hover{filter:brightness(1.15);}
+    .copy-addr-btn.done{background:var(--green);}
+
+    .msg-wrap{padding:16px 18px;}
+    .msg-label{font-size:0.69rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--navy);margin-bottom:9px;}
+    textarea.msg-area{width:100%;padding:13px 15px;border:1px solid var(--bdr);border-radius:4px;font-family:'Source Serif 4',Georgia,serif;font-size:0.85rem;color:#333;line-height:1.75;background:#fafaf8;resize:none;height:160px;cursor:text;}
+    textarea.msg-area::placeholder{color:#ccc;font-style:italic;}
+
+    .big-btn{width:100%;margin-top:10px;padding:14px 16px;border:none;border-radius:5px;font-family:'Playfair Display',serif;font-size:0.98rem;font-weight:700;cursor:pointer;transition:filter .2s,transform .15s;display:flex;align-items:center;justify-content:center;gap:9px;}
+    .big-btn:hover:not(:disabled){filter:brightness(1.1);transform:translateY(-2px);}
+    .big-btn:disabled{opacity:0.38;cursor:not-allowed;transform:none;filter:none;}
+    .big-btn.gmail  {background:#d93025;color:#fff;}
+    .big-btn.outlook{background:#0078d4;color:#fff;}
+    .big-btn.copy   {background:var(--navy);color:#fff;}
+    .big-btn.done   {background:var(--green)!important;transform:none!important;}
+
+    .android-warn{background:#fff3cd;border:1px solid #f0d97a;border-radius:5px;padding:12px 15px;font-size:0.81rem;color:#7a5c00;line-height:1.6;margin-top:10px;}
+    .send-note{font-size:0.75rem;color:var(--muted);margin-top:10px;line-height:1.6;text-align:center;}
+
+    .footer{text-align:center;padding:24px 20px;font-size:0.73rem;color:#aaa;border-top:1px solid var(--bdr);line-height:1.7;margin-top:40px;}
+    .footer a{color:var(--navy);text-decoration:none;}
+  </style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-tag">🏝️ Sullivan's Island · Citizen Action</div>
+    <h1>Should the Town Install<br/><em>Additional Cameras</em><br/>in the Accreted Land?</h1>
+    <p class="hero-desc">Select your position, add an optional note, then send your view directly to Town Council.</p>
+    <div class="hero-meta">
+      <span>📋 Town Council &amp; LUNR Committee</span>
+      <span>📍 Sullivan's Island, SC</span>
+    </div>
+  </div>
+</div>
+
+<div class="page">
+
+  <div class="slbl">Background</div>
+  <div class="context-card">
+    <p>The <strong>accreted land</strong> — the undeveloped maritime forest on the northeastern tip of Sullivan's Island — is a protected natural resource home to diverse wildlife and serving as a storm erosion buffer.</p>
+    <p>Concerns have been raised about <strong>unauthorized access, dumping, and campfires</strong> that are difficult to monitor. Installing additional security cameras has been proposed as a deterrence and enforcement tool. Key questions include cost, privacy implications, and whether alternatives like signage or patrols might work better.</p>
+  </div>
+
+  <hr class="divider"/>
+
+  <!-- Step 1 -->
+  <div class="step"><div class="snum" id="sn1">1</div>Select your position</div>
+  <div class="stance-grid">
+    <div class="sbtn favor"   id="bf" onclick="pick('favor')">
+      <span class="si">&#x2705;</span><span class="sl">In Favor</span><span class="sd">Yes, install cameras</span>
+    </div>
+    <div class="sbtn neutral" id="bn" onclick="pick('neutral')">
+      <span class="si">&#x2696;&#xFE0F;</span><span class="sl">Neutral</span><span class="sd">Need more information</span>
+    </div>
+    <div class="sbtn against" id="ba" onclick="pick('against')">
+      <span class="si">&#x274C;</span><span class="sl">Not in Favor</span><span class="sd">Not the right approach</span>
+    </div>
+  </div>
+
+  <!-- Step 2 -->
+  <div class="step"><div class="snum" id="sn2">2</div>Add a personal note <span style="font-weight:400;text-transform:none;letter-spacing:0;font-size:0.74rem;color:#bbb;margin-left:4px">(optional)</span></div>
+  <p class="fhint">A sentence or two about your own experience carries more weight with council members.</p>
+  <textarea class="note-input" id="note" oninput="refresh()" placeholder="e.g. I walk the trail regularly and have seen signs of campfires and litter..."></textarea>
+
+  <!-- Step 3 -->
+  <div class="step"><div class="snum" id="sn3">3</div>Choose who to email</div>
+  <div class="sel-row">
+    <button class="slink" onclick="setAll(true)">Select all</button>
+    <button class="slink" onclick="setAll(false)">Deselect all</button>
+  </div>
+  <div class="council-list" id="councilList"></div>
+
+  <div class="alert alert-w" id="alertBox"></div>
+
+  <!-- Step 4 -->
+  <div class="step"><div class="snum" id="sn4">4</div>Send your email</div>
+
+  <div class="send-panel">
+    <!-- To strip -->
+    <div class="recip-strip">
+      <span class="recip-label">To:</span>
+      <span class="recip-emails" id="recipTo"><em style="color:#ccc">Select recipients above</em></span>
+      <button class="copy-addr-btn" id="copyToBtn" onclick="copyAddresses()">Copy</button>
+    </div>
+    <!-- CC strip (shown only when Bob is checked) -->
+    <div class="recip-strip" id="ccStrip" style="display:none;">
+      <span class="recip-label">Cc:</span>
+      <span class="recip-emails" id="recipCc"></span>
+    </div>
+    <!-- Message -->
+    <div class="msg-wrap">
+      <div class="msg-label">Your Message</div>
+      <textarea class="msg-area" id="msgArea" readonly placeholder="Select a position above and your message will appear here..."></textarea>
+
+      <!-- Non-Android buttons -->
+      <div id="nonAndroidUI">
+        <button class="big-btn gmail"   id="gmailBtn"   onclick="openGmail()"   disabled>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 010 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L12 9.548l8.073-6.055C21.69 2.28 24 3.434 24 5.457z"/></svg>
+          Open in Gmail
+        </button>
+        <button class="big-btn outlook" id="outlookBtn" onclick="openMailto()"  disabled style="margin-top:8px;">
+          &#x2709;&#xFE0F; Open in Outlook / Mail App
+        </button>
+        <button class="big-btn copy"    id="copyBtn"    onclick="copyMsg()"     disabled style="margin-top:8px;">
+          &#x1F4CB; Copy Message (if buttons above don't work)
+        </button>
+        <p class="send-note">Your email client opens with the message pre-filled. Nothing is sent automatically.</p>
+      </div>
+
+      <!-- Android UI -->
+      <div id="androidUI" style="display:none;">
+        <div class="android-warn">
+          &#x26A0;&#xFE0F; <strong>Gmail links don't work reliably on Android Chrome.</strong><br/>
+          Long-press the message box above, tap <strong>Select All</strong>, then <strong>Copy</strong>. Open Gmail, tap Compose, paste the message, and add the addresses to the To field.
+        </div>
+        <button class="big-btn copy" id="copyBtnAndroid" onclick="copyMsg()" disabled style="margin-top:10px;">
+          &#x1F4CB; Copy Message
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">
+  Published via Sullivan's Island Substack ·
+  <a href="https://sullivansisland.sc.gov" target="_blank">sullivansisland.sc.gov</a><br/>
+  Town Hall: 2056 Middle Street · (843) 883-3198
+</div>
+
+<script>
+// ── Data ──────────────────────────────────────────────────────
+var COUNCIL = [
+  {name:"Patrick O'Neil",   role:"Mayor",                       email:"oneilp" + "@sullivansisland.sc.gov"},
+  {name:"Justin Novak",     role:"Mayor Pro Tem",               email:"jnovak" + "@sullivansisland.sc.gov"},
+  {name:"Ned Higgins",      role:"Council Member - LUNR Chair", email:"nhiggins" + "@sullivansisland.sc.gov"},
+  {name:"Carl Hubbard",     role:"Council Member",              email:"chubbard" + "@sullivansisland.sc.gov"},
+  {name:"Jody Latham",      role:"Council Member",              email:"jlatham" + "@sullivansisland.sc.gov"},
+  {name:"Melanie Burkhold", role:"Council Member",              email:"mburkhold" + "@sullivansisland.sc.gov"},
+  {name:"Laura Schroeder",  role:"Council Member",              email:"lschroeder" + "@sullivansisland.sc.gov"},
+  {name:"Bridget Welch",    role:"Town Clerk",                  email:"bwelch" + "@sullivansisland.sc.gov"}
+];
+
+var CC = {name:"Bob Heller", role:"Substack Author (CC)", email:"Penn80" + "@gmail.com"};
+
+// ── State ─────────────────────────────────────────────────────
+var stance = null;
+var checked = {};   // index -> true/false for COUNCIL members
+var ccOn = true;    // Bob Heller CC on by default
+
+COUNCIL.forEach(function(m, i) { checked[i] = true; });
+
+// ── Detect Android ────────────────────────────────────────────
+var isAndroid = /android/i.test(navigator.userAgent);
+if (isAndroid) {
+  document.getElementById("nonAndroidUI").style.display = "none";
+  document.getElementById("androidUI").style.display = "block";
+}
+
+// ── Build council list ────────────────────────────────────────
+var list = document.getElementById("councilList");
+
+COUNCIL.forEach(function(m, i) {
+  var item = document.createElement("div");
+  item.className = "citem on";
+  item.id = "item-" + i;
+  item.setAttribute("onclick", "toggleItem(" + i + ")");
+
+  var box = document.createElement("div");
+  box.className = "chkbox";
+  box.id = "box-" + i;
+  box.textContent = "\u2713";
+
+  var info = document.createElement("div");
+
+  var nameEl = document.createElement("div");
+  nameEl.className = "cname";
+  nameEl.textContent = m.name;
+
+  var roleEl = document.createElement("div");
+  roleEl.className = "crole";
+  roleEl.textContent = m.role;
+
+  var emailEl = document.createElement("div");
+  emailEl.className = "cemail";
+  emailEl.textContent = m.email;
+
+  info.appendChild(nameEl);
+  info.appendChild(roleEl);
+  info.appendChild(emailEl);
+
+  item.appendChild(box);
+  item.appendChild(info);
+  list.appendChild(item);
+});
+
+// Divider + CC label
+var hr = document.createElement("hr");
+hr.className = "cc-divider";
+list.appendChild(hr);
+
+var lbl = document.createElement("div");
+lbl.className = "cc-label";
+lbl.textContent = "CC";
+list.appendChild(lbl);
+
+// Bob Heller CC item
+var ccItem = document.createElement("div");
+ccItem.className = "citem on";
+ccItem.id = "cc-item";
+ccItem.setAttribute("onclick", "toggleCC()");
+
+var ccBox = document.createElement("div");
+ccBox.className = "chkbox";
+ccBox.id = "cc-box";
+ccBox.textContent = "\u2713";
+
+var ccInfo = document.createElement("div");
+
+var ccName = document.createElement("div");
+ccName.className = "cname";
+ccName.textContent = CC.name;
+
+var ccRole = document.createElement("div");
+ccRole.className = "crole";
+ccRole.textContent = CC.role;
+
+var ccEmail = document.createElement("div");
+ccEmail.className = "cemail";
+ccEmail.textContent = CC.email;
+
+ccInfo.appendChild(ccName);
+ccInfo.appendChild(ccRole);
+ccInfo.appendChild(ccEmail);
+
+ccItem.appendChild(ccBox);
+ccItem.appendChild(ccInfo);
+list.appendChild(ccItem);
+
+// ── Toggle functions ──────────────────────────────────────────
+function toggleItem(i) {
+  checked[i] = !checked[i];
+  var item = document.getElementById("item-" + i);
+  var box  = document.getElementById("box-" + i);
+  if (checked[i]) {
+    item.classList.add("on");
+    box.textContent = "\u2713";
+  } else {
+    item.classList.remove("on");
+    box.textContent = "";
+  }
+  refresh();
+}
+
+function toggleCC() {
+  ccOn = !ccOn;
+  var item = document.getElementById("cc-item");
+  var box  = document.getElementById("cc-box");
+  if (ccOn) {
+    item.classList.add("on");
+    box.textContent = "\u2713";
+  } else {
+    item.classList.remove("on");
+    box.textContent = "";
+  }
+  refresh();
+}
+
+function setAll(v) {
+  COUNCIL.forEach(function(m, i) {
+    checked[i] = v;
+    var item = document.getElementById("item-" + i);
+    var box  = document.getElementById("box-" + i);
+    if (v) { item.classList.add("on"); box.textContent = "\u2713"; }
+    else   { item.classList.remove("on"); box.textContent = ""; }
+  });
+  refresh();
+}
+
+// ── Stance ────────────────────────────────────────────────────
+function pick(s) {
+  stance = s;
+  ["bf","bn","ba"].forEach(function(id) {
+    document.getElementById(id).classList.remove("selected");
+  });
+  var map = {favor:"bf", neutral:"bn", against:"ba"};
+  document.getElementById(map[s]).classList.add("selected");
+  document.getElementById("sn1").classList.add("done");
+  document.getElementById("alertBox").classList.remove("on");
+  refresh();
+}
+
+// ── Message building ──────────────────────────────────────────
+var LABELS = {
+  favor:   "In Favor - Yes, install additional cameras",
+  neutral: "Neutral - I would like more information before the town decides",
+  against: "Not in Favor - I don't think cameras are the right approach"
+};
+
+function buildMsg() {
+  var note = document.getElementById("note").value.trim();
+  var msg = "Re: Cameras in the Accreted Land - Citizen Input\n\nPosition: " + LABELS[stance];
+  if (note) { msg += "\n\n" + note; }
+  msg += "\n\n[Your Name]\nSullivan's Island resident";
+  return msg;
+}
+
+function getToAddresses() {
+  var addrs = [];
+  COUNCIL.forEach(function(m, i) { if (checked[i]) addrs.push(m.email); });
+  return addrs;
+}
+
+// ── Refresh UI ────────────────────────────────────────────────
+function refresh() {
+  var toAddrs = getToAddresses();
+  var ready   = stance !== null && toAddrs.length > 0;
+
+  // To strip
+  var toEl = document.getElementById("recipTo");
+  if (toAddrs.length > 0) {
+    toEl.textContent = toAddrs.join(", ");
+  } else {
+    toEl.innerHTML = "<em style='color:#ccc'>Select recipients above</em>";
+  }
+
+  // CC strip
+  var ccStrip = document.getElementById("ccStrip");
+  var ccEl    = document.getElementById("recipCc");
+  if (ccOn) {
+    ccStrip.style.display = "flex";
+    ccEl.textContent = CC.name + " (" + CC.email + ")";
+  } else {
+    ccStrip.style.display = "none";
+  }
+
+  // Message area
+  var area = document.getElementById("msgArea");
+  area.value = ready ? buildMsg() : "";
+
+  // Buttons — enable/disable
+  var btnIds = ["gmailBtn","outlookBtn","copyBtn","copyBtnAndroid"];
+  btnIds.forEach(function(id) {
+    var b = document.getElementById(id);
+    if (b) b.disabled = !ready;
+  });
+}
+
+// ── Send actions ──────────────────────────────────────────────
+function validate() {
+  var el = document.getElementById("alertBox");
+  if (!stance) {
+    el.textContent = "Please select your position first (Step 1).";
+    el.classList.add("on"); return false;
+  }
+  if (getToAddresses().length === 0) {
+    el.textContent = "Please select at least one council member (Step 3).";
+    el.classList.add("on"); return false;
+  }
+  el.classList.remove("on");
+  return true;
+}
+
+function openGmail() {
+  if (!validate()) return;
+  var to      = getToAddresses().join(",");
+  var subject = "Cameras in the Accreted Land - Citizen Input";
+  var body    = buildMsg();
+  var url = "https://mail.google.com/mail/?view=cm"
+    + "&to="   + encodeURIComponent(to)
+    + "&su="   + encodeURIComponent(subject)
+    + "&body=" + encodeURIComponent(body);
+  if (ccOn) url += "&cc=" + encodeURIComponent(CC.email);
+  window.open(url, "_blank");
+}
+
+function openMailto() {
+  if (!validate()) return;
+  var to      = getToAddresses().join(",");
+  var subject = "Cameras in the Accreted Land - Citizen Input";
+  var href = "mailto:" + to
+    + "?subject=" + encodeURIComponent(subject)
+    + "&body="    + encodeURIComponent(buildMsg());
+  if (ccOn) href += "&cc=" + encodeURIComponent(CC.email);
+  window.location.href = href;
+}
+
+function copyMsg() {
+  if (!validate()) return;
+  var msg = buildMsg();
+  var btn = document.getElementById(isAndroid ? "copyBtnAndroid" : "copyBtn");
+  navigator.clipboard.writeText(msg).then(function() {
+    if (btn) {
+      var orig = btn.textContent;
+      btn.textContent = "Copied! Open Gmail, Compose, then Paste";
+      btn.classList.add("done");
+      setTimeout(function() { btn.textContent = orig; btn.classList.remove("done"); }, 4000);
+    }
+  }).catch(function() {
+    var area = document.getElementById("msgArea");
+    area.select();
+    alert("Text selected - use Copy (long-press or Ctrl+C).");
+  });
+}
+
+function copyAddresses() {
+  var addrs = getToAddresses();
+  if (addrs.length === 0) { alert("Please select at least one council member."); return; }
+  var text = addrs.join(", ");
+  navigator.clipboard.writeText(text).then(function() {
+    var b = document.getElementById("copyToBtn");
+    b.textContent = "Copied!"; b.classList.add("done");
+    setTimeout(function() { b.textContent = "Copy"; b.classList.remove("done"); }, 2500);
+  }).catch(function() { prompt("Copy these addresses:", text); });
+}
+
+// Init
+refresh();
+</script>
+</body>
+</html>
