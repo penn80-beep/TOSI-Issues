@@ -25,12 +25,11 @@
     .context-card{background:#fff;border:1px solid var(--bdr);border-left:4px solid var(--navy);border-radius:5px;padding:20px 22px;margin-bottom:26px;}
     .context-card p{font-size:0.9rem;line-height:1.8;color:#333;}
     .context-card strong{color:var(--navy);}
-
-    /* ── Tally card ── */
     .tally-card{background:#fff;border:1px solid var(--bdr);border-radius:5px;padding:18px 20px;margin-bottom:26px;}
     .tally-head{display:flex;align-items:baseline;gap:8px;margin-bottom:12px;}
     .tally-total{font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:900;color:var(--navy);}
     .tally-sub{font-size:0.78rem;color:var(--muted);}
+    .tally-note{font-size:0.74rem;color:#aaa;margin-bottom:12px;font-style:italic;}
     .tally-rows{display:flex;flex-direction:column;gap:7px;}
     .tally-row{display:flex;align-items:center;gap:10px;}
     .tally-lbl{font-size:0.78rem;font-weight:700;width:115px;flex-shrink:0;}
@@ -39,7 +38,6 @@
     .tally-n{font-size:0.75rem;color:var(--muted);width:36px;text-align:right;flex-shrink:0;}
     .tally-voted{background:#eef3f9;border:1px solid #c2d4ea;border-radius:4px;padding:8px 13px;font-size:0.8rem;color:var(--navy);margin-top:12px;display:none;}
     .tally-loading{font-size:0.8rem;color:#bbb;font-style:italic;}
-
     .step{display:flex;align-items:center;gap:10px;font-size:0.67rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--navy);margin-bottom:11px;}
     .snum{width:24px;height:24px;border-radius:50%;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.72rem;font-weight:700;flex-shrink:0;transition:background .3s;}
     .snum.done{background:var(--green);}
@@ -106,7 +104,7 @@
   <div class="hero-inner">
     <div class="hero-tag">&#x1F3DD;&#xFE0F; Sullivan's Island &middot; Citizen Action</div>
     <h1>Should TOSI Purchase a 2027 Ford Expedition<br/><em>for the Sullivan's Island Fire Department?</em></h1>
-    <p class="hero-desc">Select your position, add an optional note, then send your view directly to Town Council.</p>
+    <p class="hero-desc">Select your position, add an optional note, then email Town Council. Your vote is counted when you send.</p>
     <div class="hero-meta">
       <span>&#x1F4CB; Finance Committee &amp; Public Safety Committee</span>
       <span>&#x1F4CD; Sullivan's Island, SC</span>
@@ -118,18 +116,18 @@
 
   <div class="slbl">Background</div>
   <div class="context-card">
-    <p>The Town of Sullivan's Island is considering the <strong>purchase of a 2027 Ford Expedition</strong> for use by the Sullivan's Island Fire Department. The vehicle would be used to support fire and rescue operations on the island. Residents are being asked whether they support this capital expenditure.</p>
+    <p>The Town of Sullivan's Island is considering the <strong>purchase of a 2027 Ford Expedition</strong> for use by the Sullivan's Island Fire Department. The vehicle would support fire and rescue operations on the island. Residents are being asked whether they support this capital expenditure.</p>
   </div>
 
-  <!-- Live tally -->
-  <div class="slbl">Community Sentiment</div>
+  <div class="slbl">Emails Sent to Council</div>
   <div class="tally-card" id="tallyCard">
     <div class="tally-loading" id="tallyLoading">Loading results...</div>
     <div id="tallyContent" style="display:none;">
       <div class="tally-head">
         <span class="tally-total" id="tallyTotal">0</span>
-        <span class="tally-sub">residents have weighed in</span>
+        <span class="tally-sub">emails sent to council</span>
       </div>
+      <p class="tally-note">Tally updates when a resident sends their email.</p>
       <div class="tally-rows">
         <div class="tally-row">
           <span class="tally-lbl" style="color:var(--favor-col);">&#x2705; In Favor</span>
@@ -147,7 +145,7 @@
           <span class="tally-n" id="nAgainst">0</span>
         </div>
       </div>
-      <div class="tally-voted" id="tallyVoted">&#x2713; You have already recorded your position on this device.</div>
+      <div class="tally-voted" id="tallyVoted">&#x2713; You have already sent your email on this device.</div>
     </div>
   </div>
 
@@ -179,7 +177,7 @@
 
   <div class="alert alert-w" id="alertBox"></div>
 
-  <div class="step"><div class="snum" id="sn4">4</div>Send your email</div>
+  <div class="step"><div class="snum" id="sn4">4</div>Send your email — your vote is counted when you send</div>
 
   <div class="send-panel">
     <div class="recip-strip">
@@ -201,7 +199,7 @@
         </button>
         <button class="big-btn outlook" id="outlookBtn" onclick="openMailto()" disabled style="margin-top:8px;">&#x2709;&#xFE0F; Open in Outlook / Mail App</button>
         <button class="big-btn copy"    id="copyBtn"    onclick="copyMsg()"    disabled style="margin-top:8px;">&#x1F4CB; Copy Message (if buttons above don't work)</button>
-        <p class="send-note">Your email client opens with the message pre-filled. Nothing is sent automatically.</p>
+        <p class="send-note">Your email client opens with the message pre-filled. Nothing is sent automatically — your vote is counted once you click send in your email app.</p>
       </div>
       <div id="androidUI" style="display:none;">
         <div class="android-warn">&#x26A0;&#xFE0F; <strong>Gmail links don't work reliably on Android Chrome.</strong><br/>Long-press the message box above, tap <strong>Select All</strong>, then <strong>Copy</strong>. Open Gmail, tap Compose, paste the message, and add the addresses to the To field.</div>
@@ -219,14 +217,12 @@
 </div>
 
 <script>
-// ── Config ────────────────────────────────────────────────────
-var SUPABASE_URL  = "https://oxyidzoptnceilrkbvgj.supabase.co";
-var SUPABASE_KEY  = "sb_publishable_yGPSfRlI0HOkO0kypKV8_w_Yo33IbQw";
-var ISSUE_ID      = "ford-expedition";
-var VOTE_KEY      = "si_voted_" + ISSUE_ID;
-var sb            = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+var SUPABASE_URL = "https://oxyidzoptnceilrkbvgj.supabase.co";
+var SUPABASE_KEY = "sb_publishable_yGPSfRlI0HOkO0kypKV8_w_Yo33IbQw";
+var ISSUE_ID     = "ford-expedition";
+var VOTE_KEY     = "si_voted_" + ISSUE_ID;
+var sb           = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
-// ── Council / CC data ─────────────────────────────────────────
 var COUNCIL = [
   {name:"Patrick O'Neil",   role:"Mayor",          email:"oneilp"    + "@sullivansisland.sc.gov"},
   {name:"Justin Novak",     role:"Mayor Pro Tem",  email:"jnovak"    + "@sullivansisland.sc.gov"},
@@ -239,21 +235,19 @@ var COUNCIL = [
 ];
 var CC = {name:"Bob Heller", role:"Substack Author (CC)", email:"Penn80" + "@gmail.com"};
 
-// ── State ─────────────────────────────────────────────────────
-var stance  = null;
-var checked = {};
-var ccOn    = true;
+var stance   = null;
+var checked  = {};
+var ccOn     = true;
 var hasVoted = !!localStorage.getItem(VOTE_KEY);
 COUNCIL.forEach(function(m, i) { checked[i] = true; });
 
-// ── Android detect ────────────────────────────────────────────
 var isAndroid = /android/i.test(navigator.userAgent);
 if (isAndroid) {
   document.getElementById("nonAndroidUI").style.display = "none";
   document.getElementById("androidUI").style.display = "block";
 }
 
-// ── Build council list ────────────────────────────────────────
+// Build council list
 var list = document.getElementById("councilList");
 COUNCIL.forEach(function(m, i) {
   var item = document.createElement("div");
@@ -280,37 +274,35 @@ var ce = document.createElement("div"); ce.className = "cemail"; ce.textContent 
 ccInfo.appendChild(cn); ccInfo.appendChild(cr); ccInfo.appendChild(ce);
 ccItem.appendChild(ccBox); ccItem.appendChild(ccInfo); list.appendChild(ccItem);
 
-// ── Tally ─────────────────────────────────────────────────────
+// Tally
 function loadTally() {
   sb.from("votes").select("stance").eq("issue_id", ISSUE_ID)
     .then(function(res) {
       document.getElementById("tallyLoading").style.display = "none";
       document.getElementById("tallyContent").style.display = "block";
       if (res.error || !res.data) return;
-      var favor = 0, neutral = 0, against = 0;
+      var f = 0, n = 0, a = 0;
       res.data.forEach(function(v) {
-        if (v.stance === "favor") favor++;
-        else if (v.stance === "neutral") neutral++;
-        else if (v.stance === "against") against++;
+        if (v.stance === "favor") f++;
+        else if (v.stance === "neutral") n++;
+        else if (v.stance === "against") a++;
       });
-      var total = favor + neutral + against;
-      document.getElementById("tallyTotal").textContent = total;
-      document.getElementById("nFavor").textContent   = favor;
-      document.getElementById("nNeutral").textContent  = neutral;
-      document.getElementById("nAgainst").textContent  = against;
-      var pf = total ? Math.round(favor/total*100)   : 0;
-      var pn = total ? Math.round(neutral/total*100) : 0;
-      var pa = total ? Math.round(against/total*100) : 0;
-      document.getElementById("barFavor").style.width   = pf + "%";
-      document.getElementById("barNeutral").style.width = pn + "%";
-      document.getElementById("barAgainst").style.width = pa + "%";
+      var total = f + n + a;
+      document.getElementById("tallyTotal").textContent  = total;
+      document.getElementById("nFavor").textContent      = f;
+      document.getElementById("nNeutral").textContent    = n;
+      document.getElementById("nAgainst").textContent    = a;
+      document.getElementById("barFavor").style.width    = (total ? Math.round(f/total*100) : 0) + "%";
+      document.getElementById("barNeutral").style.width  = (total ? Math.round(n/total*100) : 0) + "%";
+      document.getElementById("barAgainst").style.width  = (total ? Math.round(a/total*100) : 0) + "%";
       if (hasVoted) document.getElementById("tallyVoted").style.display = "block";
     });
 }
 
-function recordVote(s) {
-  if (hasVoted) return;
-  sb.from("votes").insert([{issue_id: ISSUE_ID, stance: s}])
+// Record vote ONLY when email is sent
+function recordVote() {
+  if (hasVoted || !stance) return;
+  sb.from("votes").insert([{issue_id: ISSUE_ID, stance: stance}])
     .then(function() {
       localStorage.setItem(VOTE_KEY, "1");
       hasVoted = true;
@@ -318,7 +310,6 @@ function recordVote(s) {
     });
 }
 
-// ── Toggles ───────────────────────────────────────────────────
 function toggleItem(i) {
   checked[i] = !checked[i];
   var item = document.getElementById("item-" + i), box = document.getElementById("box-" + i);
@@ -348,11 +339,9 @@ function pick(s) {
   document.getElementById({favor:"bf",neutral:"bn",against:"ba"}[s]).classList.add("selected");
   document.getElementById("sn1").classList.add("done");
   document.getElementById("alertBox").classList.remove("on");
-  recordVote(s);
   refresh();
 }
 
-// ── Message ───────────────────────────────────────────────────
 var LABELS = {
   favor:   "In Favor - Yes, TOSI should purchase the 2027 Ford Expedition for the Fire Department",
   neutral: "Neutral - I would like more information before the town decides",
@@ -371,7 +360,8 @@ function getTo() {
 function refresh() {
   var to = getTo(), ready = stance !== null && to.length > 0;
   var toEl = document.getElementById("recipTo");
-  toEl[to.length ? "textContent" : "innerHTML"] = to.length ? to.join(", ") : "<em style='color:#ccc'>Select recipients above</em>";
+  if (to.length) { toEl.textContent = to.join(", "); }
+  else { toEl.innerHTML = "<em style='color:#ccc'>Select recipients above</em>"; }
   var ccStrip = document.getElementById("ccStrip");
   ccStrip.style.display = ccOn ? "flex" : "none";
   if (ccOn) document.getElementById("recipCc").textContent = CC.name + " (" + CC.email + ")";
@@ -391,6 +381,7 @@ function openGmail() {
   var to = getTo().join(","), sub = "Re: ford-expedition - Citizen Input";
   var url = "https://mail.google.com/mail/?view=cm&to=" + encodeURIComponent(to) + "&su=" + encodeURIComponent(sub) + "&body=" + encodeURIComponent(buildMsg());
   if (ccOn) url += "&cc=" + encodeURIComponent(CC.email);
+  recordVote();
   window.open(url, "_blank");
 }
 function openMailto() {
@@ -398,13 +389,20 @@ function openMailto() {
   var to = getTo().join(","), sub = "Re: ford-expedition - Citizen Input";
   var href = "mailto:" + to + "?subject=" + encodeURIComponent(sub) + "&body=" + encodeURIComponent(buildMsg());
   if (ccOn) href += "&cc=" + encodeURIComponent(CC.email);
+  recordVote();
   window.location.href = href;
 }
 function copyMsg() {
   if (!validate()) return;
   var btn = document.getElementById(isAndroid ? "copyBtnAndroid" : "copyBtn");
   navigator.clipboard.writeText(buildMsg()).then(function() {
-    if (btn) { var o = btn.textContent; btn.textContent = "Copied! Open Gmail, Compose, then Paste"; btn.classList.add("done"); setTimeout(function(){ btn.textContent = o; btn.classList.remove("done"); }, 4000); }
+    recordVote();
+    if (btn) {
+      var o = btn.textContent;
+      btn.textContent = "Copied! Open Gmail, Compose, then Paste";
+      btn.classList.add("done");
+      setTimeout(function(){ btn.textContent = o; btn.classList.remove("done"); }, 4000);
+    }
   }).catch(function() { document.getElementById("msgArea").select(); alert("Text selected - use Copy (long-press or Ctrl+C)."); });
 }
 function copyAddresses() {
